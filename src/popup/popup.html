@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ReelsAwareness</title>
+  <style>
+    body {
+      width: 300px;
+      min-height: 400px;
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8f9fa;
+      color: #202124;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #dadce0;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a73e8;
+    }
+
+    .header p {
+      margin: 4px 0 0 0;
+      font-size: 12px;
+      color: #5f6368;
+    }
+
+    .stats {
+      background: white;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .stat-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #5f6368;
+    }
+
+    .stat-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: #202124;
+    }
+
+    .controls {
+      background: white;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .control-group {
+      margin-bottom: 12px;
+    }
+
+    .control-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .control-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: #202124;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .3s;
+      border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+      background-color: #1a73e8;
+    }
+
+    input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    .button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      background: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .button:hover {
+      background: #1557b0;
+    }
+
+    .button.secondary {
+      background: #f1f3f4;
+      color: #3c4043;
+      border: 1px solid #dadce0;
+    }
+
+    .button.secondary:hover {
+      background: #e8eaed;
+    }
+
+    .status {
+      text-align: center;
+      font-size: 12px;
+      color: #5f6368;
+      margin-top: 16px;
+    }
+
+    .status.active {
+      color: #34a853;
+    }
+
+    .status.inactive {
+      color: #ea4335;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Reel Awareness</h1>
+    <p>Track your Instagram habits</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat-item">
+      <span class="stat-label">Total Reels Watched</span>
+      <span class="stat-value" id="total-reels">0</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Repeated Reels Views</span>
+      <span class="stat-value" id="repeated-views">0</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Total Watch Time</span>
+      <span class="stat-value" id="total-time">0m</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Reels Scrolled</span>
+      <span class="stat-value" id="total-scrolled">0</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Today's Usage</span>
+      <span class="stat-value" id="today-usage">0m / 0 reels</span>
+    </div>
+  </div>
+
+  <div id="scroll-awareness" style="
+    background: #fff3cd;
+    color: #856404;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    text-align: center;
+    display: none;
+    border: 1px solid #ffeaa7;
+  "></div>
+
+  <div class="controls">
+    <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: #202124;">Daily Limits</h3>
+
+    <div class="control-group">
+      <label class="control-label" style="display: block;">
+        <span>Daily Time Limit (minutes)</span>
+        <input type="number" id="time-limit" min="1" max="480" value="60" style="
+          width: 100%;
+          padding: 8px 12px;
+          border: 1px solid #dadce0;
+          border-radius: 6px;
+          font-size: 14px;
+          margin-top: 6px;
+        ">
+      </label>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" style="display: block;">
+        <span>Daily Reel Limit</span>
+        <input type="number" id="reel-limit" min="10" max="1000" value="100" style="
+          width: 100%;
+          padding: 8px 12px;
+          border: 1px solid #dadce0;
+          border-radius: 6px;
+          font-size: 14px;
+          margin-top: 6px;
+        ">
+      </label>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="control-group">
+      <label class="control-label">
+        <span>Extension Active</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="extension-enabled" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </label>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label">
+        <span>Show Notifications</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="show-notifications" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </label>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label">
+        <span>Enable Limit Alerts</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="enable-limits" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </label>
+      <div style="font-size: 12px; color: #666; margin-top: 4px;">
+        Show browser notifications when you exceed your daily limits
+      </div>
+    </div>
+
+    <div class="control-group">
+      <button class="button secondary" id="clear-data">Clear All Data</button>
+    </div>
+
+    <div class="control-group">
+      <button class="button secondary" id="debug-extension">Debug Extension</button>
+    </div>
+
+    <div class="control-group">
+      <button class="button" id="open-instagram">Open Instagram</button>
+    </div>
+  </div>
+
+  <div class="status" id="status">Ready to track reels</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
+
