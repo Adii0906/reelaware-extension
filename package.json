@@ -1,0 +1,29 @@
+{
+  "name": "instagram-reel-awareness",
+  "version": "1.0.0",
+  "description": "Chrome extension for mindful Instagram Reel consumption with personalized limits and positive reinforcement",
+  "main": "manifest.json",
+  "scripts": {
+    "build": "echo 'Extension ready for deployment'",
+    "test": "echo 'Load extension in chrome://extensions/ for testing'",
+    "zip": "powershell Compress-Archive -Path manifest.json,src/popup/*,src/content/*,assets/icons/*,README.md -DestinationPath instagram-reel-awareness-v1.0.0.zip -Force"
+  },
+  "keywords": [
+    "chrome-extension",
+    "instagram",
+    "wellness",
+    "productivity",
+    "social-media",
+    "mindfulness"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/instagram-reel-awareness"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/instagram-reel-awareness/issues"
+  },
+  "homepage": "https://github.com/yourusername/instagram-reel-awareness#readme"
+}
