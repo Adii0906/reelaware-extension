@@ -1,121 +1,59 @@
-# Instagram Reel Awareness Extension
+# Instagram Reel Helper
 
-A smart browser extension that promotes mindful social media consumption through personalized limits, gentle reminders, and positive reinforcement. Help yourself maintain healthy Instagram Reel viewing habits without feeling restricted.
+This extension helps you watch Instagram Reels in a healthy way. It reminds you to take breaks and helps you control your screen time.
 
-## ✨ Key Features
+## What It Does
 
-### 🎯 **Personalized Daily Limits**
-- Set your own daily time and reel limits
-- User-defined settings (no arbitrary defaults)
-- Welcome prompt for first-time setup
+- Counts how many Reels you watch
+- Tracks how long you spend watching
+- Shows gentle reminders when you watch too much
+- Lets you set daily limits for yourself
 
-### 🔔 **Smart Notification System**
-- **Graduated reminders**: Gentle → persistent (30s → 1min → 2min intervals)
-- **Snooze functionality**: "Remind me later" for 30-minute breaks
-- **Positive reinforcement**: Encouraging messages for good habits
-- **Respectful design**: User control with multiple stop options
+## How To Use
 
-### 📊 **Comprehensive Tracking**
-- Real-time reel and time tracking
-- Detailed statistics in popup dashboard
-- Daily usage summaries
-- Watch history with repeat detection
+### First Time Setup
+1. Turn on the extension
+2. Refresh your Instagram page
+3. Click the extension icon
+4. Set your daily time and reel limits
 
-### 🔒 **Privacy-First**
-- 100% local storage (no external servers)
-- No account creation required
-- No analytics or data collection
-- Open-source and transparent
+### Daily Use
+- Watch Reels like normal
+- Get nice reminders when you reach your limits
+- Click "Remind me later" if you want a break
+- Turn off the extension anytime you want
 
-## 🚀 Quick Start
+### When You Reach Your Limit
+- Clear your data to start fresh
+- Or turn off the extension until tomorrow
 
-### Installation
-1. **Download** the extension files
-2. **Open** `chrome://extensions/` in Chrome/Edge
-3. **Enable** "Developer mode"
-4. **Click** "Load unpacked" → select this folder
-5. **Done!** Extension is ready to use
+## Features
 
-### First Use
-1. **Click** the extension icon on Instagram
-2. **Set** your daily limits in the welcome prompt
-3. **Start** scrolling mindfully!
+- **Custom Limits**: Set your own daily time and reel goals
+- **Gentle Reminders**: Friendly messages instead of mean warnings
+- **Break Time**: "Remind me later" gives you 30 minutes to finish
+- **Your Choice**: Turn on/off anytime, all controls are yours
+- **Safe & Private**: Everything stays on your computer, nothing sent to others
 
-## 🎛️ How It Works
+## Installation
 
-### Smart Detection
-- Automatically detects Instagram Reels across all layouts
-- Robust video identification using multiple methods
-- Handles Instagram's frequent UI changes
+1. Open Chrome browser
+2. Go to `chrome://extensions/`
+3. Turn on "Developer mode" (top right)
+4. Click "Load unpacked"
+5. Choose this extension folder
+6. Done! The extension is ready
 
-### Limit Management
-- **Time limits**: Set daily viewing time (minutes)
-- **Reel limits**: Set maximum daily reels
-- **Flexible enforcement**: Snooze, disable, or adjust anytime
+## Help
 
-### Notification Intelligence
-```
-Approaching Limit → Gentle reminders start
-Hit Limit → Graduated notifications (30s → 1min → 2min)
-Snooze Clicked → 30-minute break
-Back Within Limits → Positive encouragement
-```
-
-## 📱 User Experience
-
-### When Within Limits
-- ✅ Silent operation
-- ✅ Occasional positive reinforcement
-- ✅ Full statistics tracking
-
-### When Approaching Limits
-- 🔔 Gentle notifications every 30 seconds
-- 💜 Positive, supportive messaging
-- 🎯 Helpful suggestions for breaks
-
-### When Limits Exceeded
-- 📢 Graduated escalation (not spam)
-- 😴 Snooze option always available
-- 🔧 Multiple ways to stop/disable
-
-## 🔧 Advanced Features
-
-### Debug Tools
-- **Debug button** in popup for troubleshooting
-- **Console logging** with detailed tracking info
-- **Status monitoring** every 30 seconds
-
-### Data Management
-- **Clear all data** option in popup
-- **Daily reset** at midnight
-- **Preserved user settings** across data clears
-
-### Customization
-- **Enable/disable** notifications
-- **Enable/disable** limits
-- **Adjust limits** anytime
-- **Extension on/off** toggle
-
-## Development
-
-To modify the extension:
-1. Edit `content.js` for the main functionality
-2. Edit `manifest.json` for permissions and metadata
-3. Reload the extension in your browser's extension manager
+- Make sure you're on instagram.com
+- Try refreshing the page if it doesn't work
+- Turn the extension on/off with the switch in the popup
+- Clear data anytime to reset your counts
 
 ## Privacy
 
-- No data is sent to external servers
-- All tracking happens locally in your browser
-- Data is stored using Chrome's local storage API
-- You can clear all data by uninstalling the extension or clearing browser data
-
-## Troubleshooting
-
-If the extension isn't working:
-1. Make sure you're on instagram.com
-2. Check that the extension is enabled in your browser
-3. Try refreshing the Instagram page
-4. Check browser console for any errors
-
-Instagram frequently changes their DOM structure, so the reel detection logic may need updates over time.
+- Your data stays only on your computer
+- No one else can see what you watch
+- You can delete everything by clearing browser data
+- No accounts or sign-ups needed
