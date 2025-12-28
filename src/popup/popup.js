@@ -41,6 +41,7 @@ class PopupManager {
 
     this.elements.showNotifications.addEventListener('change', (e) => {
       this.saveSetting('showNotifications', e.target.checked);
+      this.notifyContentScript('updateSettings');
       this.notifyBackgroundScript('updateSettings');
     });
 
@@ -66,6 +67,7 @@ class PopupManager {
       const value = Math.max(1, Math.min(480, parseInt(e.target.value) || 60));
       e.target.value = value;
       this.saveSetting('timeLimit', value);
+      this.notifyContentScript('updateSettings');
       this.notifyBackgroundScript('updateSettings');
     });
 
@@ -73,11 +75,13 @@ class PopupManager {
       const value = Math.max(10, Math.min(1000, parseInt(e.target.value) || 100));
       e.target.value = value;
       this.saveSetting('reelLimit', value);
+      this.notifyContentScript('updateSettings');
       this.notifyBackgroundScript('updateSettings');
     });
 
     this.elements.enableLimits.addEventListener('change', (e) => {
       this.saveSetting('enableLimits', e.target.checked);
+      this.notifyContentScript('updateSettings');
       this.notifyBackgroundScript('updateSettings');
     });
   }

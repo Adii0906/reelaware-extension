@@ -17,8 +17,11 @@ class ReelTracker {
     this.limitAlertInterval = null;
     this.isShowingLimitAlert = false;
     this.snoozeUntil = null;
+    this.snoozeTimeout = null; // Timeout ID to auto-resume after snooze ends
     this.limitAlertCount = 0;
-    this.lastPositiveNotification = 0;
+    this.lastPositiveNotification = 0; // Timestamp of last positive notification
+    this.periodicCheckInterval = null;
+    this.statusLogInterval = null;
     this.init();
   }
 
@@ -59,15 +62,23 @@ class ReelTracker {
   }
 
   startPeriodicChecks() {
+    // Clear any existing intervals first
+    if (this.periodicCheckInterval) {
+      clearInterval(this.periodicCheckInterval);
+    }
+    if (this.statusLogInterval) {
+      clearInterval(this.statusLogInterval);
+    }
+
     // Check for new videos every 5 seconds
-    setInterval(() => {
+    this.periodicCheckInterval = setInterval(() => {
       if (this.settings.extensionEnabled) {
         this.checkForReels();
       }
     }, 5000);
 
     // Log current tracking status every 30 seconds
-    setInterval(() => {
+    this.statusLogInterval = setInterval(() => {
       console.log('📈 Tracking Status:', {
         extensionEnabled: this.settings.extensionEnabled,
         totalReelsTracked: this.watchedReels.size,
@@ -480,6 +491,11 @@ class ReelTracker {
 
     const handlePlay = () => {
       try {
+        // Don't track if extension is disabled
+        if (!this.settings.extensionEnabled) {
+          return;
+        }
+
         console.log('🎬 Reel started playing:', reelId, 'at', new Date().toLocaleTimeString());
         playStartTime = Date.now();
         hasBeenCounted = false;
@@ -565,6 +581,12 @@ class ReelTracker {
   }
 
   async recordWatch(reelId, duration) {
+    // Don't track if extension is disabled
+    if (!this.settings.extensionEnabled) {
+      console.log('Extension disabled - not recording watch');
+      return;
+    }
+
     console.log(`⏱️ Recording watch for ${reelId}, duration: ${Math.round(duration/1000)}s`);
 
     // Only count watches longer than 1 second to avoid accidental taps
@@ -642,6 +664,7 @@ class ReelTracker {
 
     // Create new notification
     this.notificationElement = document.createElement('div');
+    this.notificationElement.className = 'limit-alert';
     this.notificationElement.innerHTML = `
       <div style="
         position: fixed;
@@ -688,9 +711,73 @@ class ReelTracker {
 
   hideNotification() {
     if (this.notificationElement && this.notificationElement.parentNode) {
+      // Clear any auto-hide timeout if it exists
+      if (this.notificationElement._autoHideTimeout) {
+        clearTimeout(this.notificationElement._autoHideTimeout);
+        this.notificationElement._autoHideTimeout = null;
+      }
+
       this.notificationElement.remove();
       this.notificationElement = null;
     }
+  }
+
+  stopAllTracking() {
+    console.log('🛑 Stopping all tracking - extension disabled');
+
+    // Remove all video event listeners
+    const allVideos = document.querySelectorAll('video[data-reel-tracked]');
+    allVideos.forEach(video => {
+      if (video._reelListeners) {
+        // Remove all listeners from this video
+        Object.values(video._reelListeners).forEach(listener => {
+          if (typeof listener === 'function') {
+            try {
+              video.removeEventListener('play', listener);
+              video.removeEventListener('pause', listener);
+              video.removeEventListener('ended', listener);
+              document.removeEventListener('visibilitychange', listener);
+            } catch (e) {
+              // Ignore errors if listener already removed
+            }
+          }
+        });
+        // Clear the stored listeners
+        video._reelListeners = null;
+      }
+    });
+
+    // Stop periodic checks
+    if (this.periodicCheckInterval) {
+      clearInterval(this.periodicCheckInterval);
+      this.periodicCheckInterval = null;
+    }
+
+    // Stop status logging
+    if (this.statusLogInterval) {
+      clearInterval(this.statusLogInterval);
+      this.statusLogInterval = null;
+    }
+
+    // Stop limit alerts
+    this.stopPeriodicAlerts();
+
+    // Clear active reel
+    this.activeReel = null;
+
+    console.log('✅ All tracking stopped');
+  }
+
+  restartTracking() {
+    console.log('▶️ Restarting tracking - extension enabled');
+
+    // Restart periodic checks
+    this.startPeriodicChecks();
+
+    // Re-check for existing reels on the page
+    this.checkForReels();
+
+    console.log('✅ Tracking restarted');
   }
 
   setupMessageListener() {
@@ -699,8 +786,12 @@ class ReelTracker {
         this.settings.extensionEnabled = message.data;
         console.log('Extension toggled:', message.data);
         if (!message.data) {
-          // If disabled, hide any current notifications
+          // If disabled, stop all tracking and hide notifications
+          this.stopAllTracking();
           this.hideNotification();
+        } else {
+          // If enabled, restart tracking
+          this.restartTracking();
         }
       } else if (message.action === 'debug') {
         this.showDebugInfo();
@@ -752,6 +843,7 @@ class ReelTracker {
       this.hideNotification();
 
       this.notificationElement = document.createElement('div');
+      this.notificationElement.className = 'scroll-milestone-notification';
       this.notificationElement.innerHTML = `
         <div style="
           position: fixed;
@@ -771,7 +863,13 @@ class ReelTracker {
         ">
           <div style="display: flex; align-items: center; gap: 8px;">
             <span>${message}</span>
-            <button onclick="this.parentElement.parentElement.remove()" style="
+            <button onclick="
+              const notification = this.closest('.scroll-milestone-notification');
+              if (notification && notification.parentNode) {
+                notification.remove();
+                notification.style.display = 'none';
+              }
+            " style="
               background: none;
               border: none;
               color: white;
@@ -795,14 +893,20 @@ class ReelTracker {
 
       document.body.appendChild(this.notificationElement);
 
-      setTimeout(() => {
-        this.hideNotification();
+      // Auto-hide after 4 seconds (shorter for milestone notifications)
+      const autoHideTimeout = setTimeout(() => {
+        if (this.notificationElement && this.notificationElement.className === 'scroll-milestone-notification') {
+          this.hideNotification();
+        }
       }, 4000);
+
+      // Store timeout reference for cleanup if needed
+      this.notificationElement._autoHideTimeout = autoHideTimeout;
     }
   }
 
   checkLimitsAndStartAlerts() {
-    if (!this.settings.enableLimits || !this.dailyStats) return;
+    if (!this.settings.enableLimits || !this.settings.showNotifications || !this.dailyStats) return;
 
     // Check if we're in snooze period
     if (this.snoozeUntil && Date.now() < this.snoozeUntil) {
@@ -927,10 +1031,8 @@ class ReelTracker {
   }
 
   getNotificationInterval() {
-    // Start with gentle reminders, become more frequent if ignored
-    if (this.limitAlertCount < 3) return 30000; // 30 seconds for first 3 alerts
-    if (this.limitAlertCount < 6) return 60000; // 1 minute for next 3 alerts
-    return 120000; // 2 minutes for ongoing alerts (instead of every 2 seconds)
+    // When user hits the limit, show reminders every 2.5 seconds as requested
+    return 2500; // 2500ms = 2.5 seconds
   }
 
   stopPeriodicAlerts() {
@@ -943,7 +1045,7 @@ class ReelTracker {
   }
 
   showLimitAlert() {
-    if (!this.settings.enableLimits || !this.dailyStats) return;
+    if (!this.settings.enableLimits || !this.settings.showNotifications || !this.dailyStats) return;
 
     const timeLimitMs = this.settings.timeLimit * 60 * 1000;
     const timeExceeded = this.dailyStats.watchTime >= timeLimitMs;
@@ -1033,33 +1135,72 @@ class ReelTracker {
     const snoozeBtn = this.notificationElement.querySelector('#snooze-alert');
     if (snoozeBtn) {
       snoozeBtn.addEventListener('click', () => {
-        this.snoozeAlerts();
+        // Ask user how many minutes to snooze (default 30)
+        try {
+          const input = prompt('Snooze reminders for how many minutes?', '30');
+          let minutes = parseInt(input, 10);
+          if (isNaN(minutes) || minutes <= 0) minutes = 30;
+          this.snoozeAlerts(minutes);
+        } catch (e) {
+          // Fallback to default if prompt fails
+          this.snoozeAlerts(30);
+        }
         this.hideNotification();
       });
     }
 
-    // Auto-hide after 8 seconds (longer for user-friendly experience)
+    // Auto-hide after 3.5 seconds (enough time for user to interact)
     setTimeout(() => {
       if (this.notificationElement && this.notificationElement.parentNode) {
         this.hideNotification();
       }
-    }, 8000);
+    }, 3500);
   }
 
-  snoozeAlerts() {
-    // Stop current alerts and snooze for 30 minutes
+  snoozeAlerts(minutes = 30) {
+    // Stop current alerts and snooze for specified minutes
     this.stopPeriodicAlerts();
-    this.snoozeUntil = Date.now() + (30 * 60 * 1000); // 30 minutes
+    const ms = Math.max(1, Math.floor(minutes)) * 60 * 1000; // at least 1 minute
+    this.snoozeUntil = Date.now() + ms;
 
-    console.log('🔔 Alerts snoozed for 30 minutes');
+    // Clear any previously scheduled resume
+    if (this.snoozeTimeout) {
+      clearTimeout(this.snoozeTimeout);
+      this.snoozeTimeout = null;
+    }
 
-    // Show confirmation
-    this.showSnoozeConfirmation();
+    // Schedule automatic resume when snooze expires
+    this.snoozeTimeout = setTimeout(() => {
+      this.snoozeTimeout = null;
+      this.snoozeUntil = null;
+
+      console.log('🔔 Snooze period ended, checking limits and resuming alerts');
+
+      // Re-check limits and start alerts if still exceeded
+      try {
+        this.checkLimitsAndStartAlerts();
+      } catch (e) {
+        console.error('Error while resuming alerts after snooze:', e);
+      }
+
+      // Show small confirmation that reminders have resumed
+      try {
+        this.showSnoozeEndedNotification(minutes);
+      } catch (e) {
+        console.error('Failed to show snooze-ended notification:', e);
+      }
+    }, ms);
+
+    console.log(`🔔 Alerts snoozed for ${minutes} minutes`);
+
+    // Show confirmation with actual minutes
+    this.showSnoozeConfirmation(minutes);
   }
 
-  showSnoozeConfirmation() {
+  showSnoozeConfirmation(minutes = 30) {
     this.hideNotification();
 
+    const plural = minutes === 1 ? 'minute' : 'minutes';
     this.notificationElement = document.createElement('div');
     this.notificationElement.innerHTML = `
       <div style="
@@ -1077,7 +1218,7 @@ class ReelTracker {
         animation: gentlePulse 0.3s ease-out;
       ">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <span>✅ Reminders snoozed for 30 minutes</span>
+          <span>✅ Reminders snoozed for ${minutes} ${plural}</span>
         </div>
       </div>
       <style>
@@ -1094,6 +1235,42 @@ class ReelTracker {
     setTimeout(() => {
       this.hideNotification();
     }, 3000);
+  }
+
+  // Small notification shown when snooze period ends and reminders resume
+  showSnoozeEndedNotification(minutes = 0) {
+    // Only show a short confirmation if the user chose a snooze
+    this.hideNotification();
+
+    const message = minutes > 0 ? `🔔 Reminders resumed after ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}.` : '🔔 Reminders resumed.';
+
+    this.notificationElement = document.createElement('div');
+    this.notificationElement.innerHTML = `
+      <div style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 13px;
+        z-index: 9999;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        opacity: 0.98;
+      ">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span>${message} You'll see alerts again.</span>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(this.notificationElement);
+
+    setTimeout(() => {
+      this.hideNotification();
+    }, 4000);
   }
 
 }
