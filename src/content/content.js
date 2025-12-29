@@ -793,8 +793,6 @@ class ReelTracker {
           // If enabled, restart tracking
           this.restartTracking();
         }
-      } else if (message.action === 'debug') {
-        this.showDebugInfo();
       } else if (message.action === 'updateSettings') {
         // Reload settings when popup updates them
         this.loadSettings().then(() => {
@@ -804,24 +802,87 @@ class ReelTracker {
     });
   }
 
-  showDebugInfo() {
-    console.log('DEBUG INFO:');
-    console.log('Settings:', this.settings);
-    console.log('Daily Stats:', this.dailyStats);
-    console.log('Watched Reels Count:', this.watchedReels.size);
-    console.log('Total Reels Scrolled:', this.totalReelsScrolled);
-    console.log('Scrolled Reels Set Size:', this.scrolledReels.size);
+  showScrollMilestoneNotification(totalScrolled) {
+      // Show notifications at milestones
+      let message = '';
 
-    // Show top 5 watched reels
-    const sortedReels = Array.from(this.watchedReels.entries())
-      .sort((a, b) => b[1].count - a[1].count)
-      .slice(0, 5);
+      if (totalScrolled === 5) {
+        message = "You've scrolled through 5 reels.";
+      } else if (totalScrolled === 10) {
+        message = "You've viewed 10 reels today.";
+      } else if (totalScrolled === 20) {
+        message = "You've scrolled through 20 reels.";
+      } else if (totalScrolled === 50) {
+        message = "You've viewed 50 reels today.";
+      } else if (totalScrolled % 25 === 0 && totalScrolled >= 25) {
+        message = `You've scrolled through ${totalScrolled} reels.`;
+      }
 
-    console.log('Top 5 watched reels:');
-    sortedReels.forEach(([id, data]) => {
-      console.log(`  ${id}: ${data.count} times, ${Math.round(data.totalWatchTime/1000)}s total`);
-    });
-  }
+      if (message && this.settings.showNotifications) {
+        this.hideNotification();
+
+        this.notificationElement = document.createElement('div');
+        this.notificationElement.className = 'scroll-milestone-notification';
+        this.notificationElement.innerHTML = `
+          <div style="
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 20px;
+            border-radius: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 9999;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            animation: bounceIn 0.5s ease-out;
+            border: 2px solid rgba(255,255,255,0.2);
+          ">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span>${message}</span>
+              <button onclick="
+                const notification = this.closest('.scroll-milestone-notification');
+                if (notification && notification.parentNode) {
+                  notification.remove();
+                  notification.style.display = 'none';
+                }
+              " style="
+                background: none;
+                border: none;
+                color: white;
+                cursor: pointer;
+                font-size: 16px;
+                line-height: 1;
+                margin-left: 8px;
+                opacity: 0.8;
+              ">✕</button>
+            </div>
+          </div>
+          <style>
+            @keyframes bounceIn {
+              0% { transform: scale(0.3); opacity: 0; }
+              50% { transform: scale(1.05); }
+              70% { transform: scale(0.9); }
+              100% { transform: scale(1); opacity: 1; }
+            }
+          </style>
+        `;
+
+        document.body.appendChild(this.notificationElement);
+
+        // Auto-hide after 4 seconds (shorter for milestone notifications)
+        const autoHideTimeout = setTimeout(() => {
+          if (this.notificationElement && this.notificationElement.className === 'scroll-milestone-notification') {
+            this.hideNotification();
+          }
+        }, 4000);
+
+        // Store timeout reference for cleanup if needed
+        this.notificationElement._autoHideTimeout = autoHideTimeout;
+      }
+    }
 
   showScrollMilestoneNotification(totalScrolled) {
     // Show notifications at milestones
@@ -1056,7 +1117,12 @@ class ReelTracker {
       return;
     }
 
-    this.hideNotification();
+    // If a limit alert is already visible, keep it - don't recreate or auto-hide
+    if (this.notificationElement) {
+      if (this.notificationElement.className === 'limit-alert') return;
+      // Remove any other non-limit notifications before showing the persistent limit alert
+      this.hideNotification();
+    }
 
     let title = 'Daily Limit Reached';
     let message = '';
@@ -1074,6 +1140,8 @@ class ReelTracker {
     }
 
     this.notificationElement = document.createElement('div');
+    // Mark this as the persistent limit alert so repeated calls don't recreate it
+    this.notificationElement.className = 'limit-alert';
     this.notificationElement.innerHTML = `
       <div style="
         position: fixed;
@@ -1106,16 +1174,6 @@ class ReelTracker {
             cursor: pointer;
             transition: background 0.2s;
           ">Remind me later</button>
-          <button onclick="this.parentElement.parentElement.parentElement.remove()" style="
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            line-height: 1;
-            opacity: 0.8;
-            padding: 4px;
-          ">✕</button>
         </div>
       </div>
       <style>
@@ -1145,16 +1203,10 @@ class ReelTracker {
           // Fallback to default if prompt fails
           this.snoozeAlerts(30);
         }
+        // Hide the persistent alert once user snoozes
         this.hideNotification();
       });
     }
-
-    // Auto-hide after 3.5 seconds (enough time for user to interact)
-    setTimeout(() => {
-      if (this.notificationElement && this.notificationElement.parentNode) {
-        this.hideNotification();
-      }
-    }, 3500);
   }
 
   snoozeAlerts(minutes = 30) {

@@ -49,14 +49,6 @@ class PopupManager {
       this.confirmClearData();
     });
 
-    // Add debug button functionality
-    const debugButton = document.getElementById('debug-extension');
-    if (debugButton) {
-      debugButton.addEventListener('click', () => {
-        this.debugExtension();
-      });
-    }
-
     this.elements.openInstagram.addEventListener('click', () => {
       this.openInstagram();
     });
@@ -418,30 +410,9 @@ class PopupManager {
       console.error('Failed to notify background script:', error);
     }
   }
-
-  async debugExtension() {
-    console.log('🔍 Starting extension debug...');
-
-    try {
-      // Get all storage data
-      const allData = await chrome.storage.local.get(null);
-      console.log('📦 Storage data:', allData);
-
-      // Send debug message to content script
-      await this.notifyContentScript('debug', null);
-
-      // Show debug info in popup
-      alert(`Debug Info:\n\nExtension Enabled: ${allData.extensionEnabled}\nTime Limit: ${allData.timeLimit} min\nReel Limit: ${allData.reelLimit}\nShow Notifications: ${allData.showNotifications}\nEnable Limits: ${allData.enableLimits}\n\nTotal Reels Scrolled: ${allData.totalReelsScrolled || 0}\n\nCheck browser console for detailed logs!`);
-
-    } catch (error) {
-      console.error('Debug failed:', error);
-      alert('Debug failed. Check console for details.');
-    }
   }
-}
 
-// Initialize popup when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-  window.popupManager = new PopupManager();
-});
-
+  // Initialize popup when DOM is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    window.popupManager = new PopupManager();
+  });

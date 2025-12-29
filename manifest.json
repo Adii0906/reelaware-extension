@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Unscroll",
+  "name": "ScrollX",
   "version": "1.0",
-  "description": "Keep track of your Instagram Reel usage and Promote mindful consumption with positive reinforcement.",
+  "description": "Tracks Instagram Reels watch time, reel count, and repeated views, allowing users to set personal limits with gentle reminders to reduce passive scrolling..",
   "icons": {
     "16": "assets/icons/icon16.png",
     "32": "assets/icons/icon32.png",
