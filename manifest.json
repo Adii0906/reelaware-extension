@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Instagram Reel Awareness",
+  "name": "Unscroll",
   "version": "1.0",
-  "description": "Promote mindful social media consumption with personalized limits and gentle reminders",
+  "description": "Keep track of your Instagram Reel usage and Promote mindful consumption with positive reinforcement.",
   "icons": {
     "16": "assets/icons/icon16.png",
     "32": "assets/icons/icon32.png",
